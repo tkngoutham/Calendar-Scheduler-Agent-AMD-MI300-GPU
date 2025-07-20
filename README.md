@@ -35,15 +35,14 @@ An intelligent calendar scheduling system that uses AI agents to automatically s
 - **GPU**: AMD MI300
 - **Backend**: Flask (Python)
 - **Calendar API**: Google Calendar API
-- **Inference Server**: vLLM (localhost:3000)
+- **Inference Server**: vLLM 
 
 ## 📋 Prerequisites
 
 - Python 3.12+
 - AMD MI300 GPU
-- vLLM server running on localhost:3000
+- vLLM server running locally
 - Google Calendar API credentials
-- Valid user accounts: userone.amd@gmail.com, usertwo.amd@gmail.com, userthree.amd@gmail.com
 
 ## 🚀 Installation
 
@@ -53,39 +52,25 @@ An intelligent calendar scheduling system that uses AI agents to automatically s
    cd Calendar-Scheduler-Agent-AMD-MI300-GPU
    ```
 
-2. **Install dependencies**
-   ```bash
-   pip install langchain
-   pip install langgraph
-   pip install langchain-openai
-   pip install langchain-core
-   pip install flask
-   pip install google-auth google-auth-oauthlib google-auth-httplib2 google-api-python-client
-   pip install pytz
-   ```
-
-3. **Setup Google Calendar API**
-   - Create a Google Cloud Project
-   - Enable Google Calendar API
-   - Create OAuth 2.0 credentials
-   - Place token files in `Keys/` directory:
-     - `Keys/userone.token`
-     - `Keys/usertwo.token`
-     - `Keys/userthree.token`
-
-4. **Configure vLLM Server**
+2. **Configure vLLM Server**
    ```bash
    # Start vLLM server with Qwen model
-   vllm serve Qwen/Qwen2.5-14B-Instruct --host 0.0.0.0 --port 3000
+   HIP_VISIBLE_DEVICES=0 vllm serve Qwen/Qwen2.5-14B-Instruct --gpu-memory-utilization 0.9 --swap-space 16 --disable-log-requests --dtype bfloat16 --max-model-len 10000 --tensor-parallel-size 1 --host 0.0.0.0 --    port 3000 --num-scheduler-steps 10 --max-num-seqs 128 --max-num-batched-tokens 10000 --distributed-executor-backend "mp" --api-key goutham --enable-auto-tool-choice --tool-call-parser hermes
    ```
+3. **Run all cells Submissions.ipynb**
 
 ## 🎯 Usage
 
-### Starting the Service
-
-```python
-# Run the Jupyter notebook cells in order
-# The Flask server will start automatically on port 5000
+### Connect to Flask Server which is running in Submissions.ipynb"
+```
+import requests
+import json
+SERVER_URL = "http://129.212.191.94"
+INPUT_JSON_FILE = "JSON_Samples/Input_Request.json"
+with open(INPUT_JSON_FILE) as f:
+        input_json = json.load(f)
+response = requests.post(SERVER_URL+":5000/receive", json=input_json, timeout=10)
+print(response.json())
 ```
 
 ### API Endpoint
@@ -134,25 +119,6 @@ An intelligent calendar scheduling system that uses AI agents to automatically s
 }
 ```
 
-## 🔧 Configuration
-
-### Model Configuration
-```python
-base_url = "http://localhost:3000/v1"
-api_key = "goutham"
-model = "Qwen/Qwen2.5-14B-Instruct"
-```
-
-### Timezone Settings
-- **Reference Date**: 2025-07-20 (Sunday)
-- **Timezone**: IST (+05:30)
-- **Working Hours**: 9 AM - 6 PM (weekdays only)
-
-### Valid Users
-- userone.amd@gmail.com
-- usertwo.amd@gmail.com  
-- userthree.amd@gmail.com
-
 ## 🧠 AI Agent Workflow
 
 1. **Email Analysis**: Parse email content for meeting type and timing
@@ -165,7 +131,7 @@ model = "Qwen/Qwen2.5-14B-Instruct"
 
 ## 📊 Performance
 
-- **Latency**: Typically 2-3 seconds per request
+- **Latency**: Typically 7-8 seconds per request
 - **GPU Utilization**: Optimized for AMD MI300
 - **Concurrent Requests**: Flask handles multiple simultaneous requests
 - **Accuracy**: High accuracy in meeting classification and conflict resolution
